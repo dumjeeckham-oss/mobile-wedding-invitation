@@ -87,6 +87,17 @@ test('worker separates public read and authenticated CRUD actions', async () => 
   assert.ok(db.runs.some((run) => run.sql.includes('INSERT INTO events')));
 });
 
+test('public event response is filtered and includes CORS headers', async () => {
+  const db = new FakeDb();
+  const env = { DB: db, ACCESS_ISSUER: 'https://access.example.com', ACCESS_AUDIENCE: 'invite-admin', ADMIN_EMAIL: 'admin@example.com' };
+  const response = await worker.fetch(new Request('https://local/api/public/events/public-event'), env);
+  const payload = await response.json() as Record<string, unknown>;
+  assert.equal(response.headers.get('access-control-allow-origin'), '*');
+  assert.equal(payload.slug, 'public-event');
+  assert.equal('deleted_at' in payload, false);
+  assert.equal('organization_id' in payload, false);
+});
+
 test('preview token is event-bound and expires', async () => {
   const token = await createPreviewToken('event-1', 'local-preview-secret', 60);
   assert.equal(await verifyPreviewToken(token, 'event-1', 'local-preview-secret'), true);

@@ -1,21 +1,23 @@
+import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import GalleryWrap from '@/layout/Gallery/GalleryWrap.tsx';
 import { getBackground } from './backgrounds.ts';
 import { getFont } from './catalog.ts';
-import { loadState } from './localRepository.ts';
-import { resolveLogo } from './validation.ts';
+import { toEvent } from './repository.ts';
 import { EventRecord } from './types.ts';
 import { getKakaoMapLinks, getNaverMapLinks, getYouTubeEmbedUrl, openExternalAppOrWeb } from '@/utils/externalLinks.ts';
 
 const EventPublic = ({ slug }: { slug: string }) => {
-  const event = loadState().events.find((item) => item.slug === slug && item.publicationStatus === 'public' && !item.deletedAt);
+  const [event, setEvent] = useState<EventRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { const base = String(import.meta.env.VITE_ADMIN_API_BASE_URL || ''); fetch(`${base}/api/public/events/${encodeURIComponent(slug)}`).then(async (response) => response.ok ? toEvent(await response.json()) : null).then(setEvent).catch(() => setEvent(null)).finally(() => setLoading(false)); }, [slug]);
+  if (loading) return <NotFound>초대장을 불러오는 중입니다.</NotFound>;
   if (!event) return <NotFound>공개된 초대장을 찾을 수 없습니다.</NotFound>;
   return <Invitation event={event} />;
 };
 
 const Invitation = ({ event }: { event: EventRecord }) => {
-  const state = loadState();
-  const logo = resolveLogo(event, state.organizations, state.logos);
+  const logo = event.logoExternalUrl ? { dataUrl: event.logoExternalUrl } : undefined;
   const background = getBackground(event.themeSettings.backgroundPresetId);
   const titleFont = getFont(event.fontSettings.title);
   const bodyFont = getFont(event.fontSettings.body);

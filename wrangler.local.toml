@@ -1,5 +1,6 @@
 # Local-only D1 configuration. Do not use this file with --remote.
 name = "invite-local"
+main = "worker/index.ts"
 compatibility_date = "2026-11-18"
 
 [[d1_databases]]

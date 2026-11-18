@@ -19,9 +19,12 @@ export const validateEvent = (event: Partial<EventRecord>, existing: EventRecord
     errors.slug = '이미 사용 중인 행사 URL입니다.';
   }
   if (event.videoUrl && !getYouTubeVideoId(event.videoUrl)) errors.videoUrl = 'YouTube watch, youtu.be 또는 shorts 링크만 사용할 수 있습니다.';
-  if (event.logoSourceType === 'url' && event.logoExternalUrl) {
-    const logoUrlError = validateLogoUrl(event.logoExternalUrl);
-    if (logoUrlError) errors.logoExternalUrl = logoUrlError;
+  if (event.logoSourceType === 'url') {
+    if (!event.logoExternalUrl) errors.logoExternalUrl = '외부 로고 URL을 입력하세요.';
+    else {
+      const logoUrlError = validateLogoUrl(event.logoExternalUrl);
+      if (logoUrlError) errors.logoExternalUrl = logoUrlError;
+    }
   }
   if (event.coordinates && (!Number.isFinite(event.coordinates.lat) || !Number.isFinite(event.coordinates.lon) || event.coordinates.lat < -90 || event.coordinates.lat > 90 || event.coordinates.lon < -180 || event.coordinates.lon > 180)) {
     errors.coordinates = '좌표 범위를 확인하세요.';

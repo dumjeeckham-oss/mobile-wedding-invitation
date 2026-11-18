@@ -1,9 +1,9 @@
-import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { getFont, FONT_OPTIONS } from './catalog.ts';
 import { BACKGROUND_PRESETS, getBackground } from './backgrounds.ts';
-import { createEvent, createLogo, createOrganization, loadState, saveState } from './localRepository.ts';
-import { resolveLogo, slugify, validateEvent, validateLogo } from './validation.ts';
+import { createAdminRepository } from './repository.ts';
+import { resolveLogo, slugify, validateEvent, validateLogo, validateLogoUrl } from './validation.ts';
 import { AdminState, EventRecord, LogoAsset, Organization } from './types.ts';
 
 type Tab = 'dashboard' | 'events' | 'organizations' | 'logos' | 'design';
@@ -14,58 +14,51 @@ const newEvent = (): EventRecord => {
 };
 
 const AdminApp = () => {
-  const [state, setState] = useState<AdminState>(() => loadState());
+  const repository = useMemo(() => createAdminRepository(), []);
+  const [state, setState] = useState<AdminState>({ organizations: [], logos: [], events: [] });
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('dashboard');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<EventRecord>(newEvent());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState('');
   const [orgName, setOrgName] = useState('');
+  const mounted = useRef(true);
+
+  useEffect(() => { repository.load().then((loaded) => { if (mounted.current) { setState(loaded); setLoading(false); } }).catch((error: Error) => { if (mounted.current) { setNotice(error.message); setLoading(false); } }); return () => { mounted.current = false; }; }, [repository]);
 
   const activeEvent = state.events.find((event) => event.id === selectedId);
   const visibleEvents = state.events.filter((event) => !event.deletedAt);
   const draftLogo = useMemo(() => resolveLogo(draft, state.organizations, state.logos), [draft, state]);
 
-  const commit = (next: AdminState, message: string) => { setState(next); saveState(next); setNotice(message); };
   const selectEvent = (event: EventRecord) => { setSelectedId(event.id); setDraft({ ...event }); setErrors({}); setTab('events'); };
   const startCreate = () => { setSelectedId(null); setDraft(newEvent()); setErrors({}); setTab('events'); };
 
-  const saveEvent = (event: FormEvent) => {
+  const saveEvent = async (event: FormEvent) => {
     event.preventDefault();
     const result = validateEvent(draft, state.events, selectedId || undefined);
     setErrors(result.errors);
     if (Object.keys(result.errors).length) return;
     const normalized = { ...draft, slug: result.slug, id: selectedId || crypto.randomUUID(), updatedAt: new Date().toISOString(), createdAt: selectedId ? draft.createdAt : new Date().toISOString() };
-    const events = selectedId ? state.events.map((item) => item.id === selectedId ? normalized : item) : [...state.events, normalized];
-    commit({ ...state, events }, '행사를 저장했습니다.');
-    setSelectedId(normalized.id);
-    setDraft(normalized);
+    try { const saved = await repository.saveEvent(normalized, selectedId || undefined); const refreshed = await repository.load(); setState(refreshed); setNotice('서버에 행사를 저장했습니다.'); setSelectedId(saved.id); setDraft(saved); } catch (error) { setNotice(error instanceof Error ? error.message : '저장에 실패했습니다. 입력 내용을 유지합니다.'); }
   };
 
-  const cloneEvent = () => {
+  const cloneEvent = async () => {
     if (!activeEvent) return;
-    const cloned = createEvent(activeEvent);
-    const next = { ...state, events: [...state.events, cloned] };
-    commit(next, '행사를 복제했습니다.');
-    selectEvent(cloned);
+    try { const cloned = await repository.cloneEvent(activeEvent.id); setState(await repository.load()); setNotice('행사를 복제했습니다.'); selectEvent(cloned); } catch (error) { setNotice(error instanceof Error ? error.message : '복제에 실패했습니다.'); }
   };
 
-  const changeStatus = (status: EventRecord['publicationStatus']) => {
+  const changeStatus = async (status: EventRecord['publicationStatus']) => {
     if (!selectedId) return;
-    const events = state.events.map((item) => item.id === selectedId ? { ...item, publicationStatus: status, deletedAt: status === 'trash' ? new Date().toISOString() : undefined, updatedAt: new Date().toISOString() } : item);
-    commit({ ...state, events }, status === 'public' ? '행사를 공개했습니다.' : status === 'trash' ? '휴지통으로 이동했습니다.' : '행사 상태를 변경했습니다.');
-    setDraft(events.find((item) => item.id === selectedId) || draft);
+    try { const updated = await repository.setEventStatus(selectedId, status); setState(await repository.load()); setDraft(updated); setNotice(status === 'public' ? '행사를 공개했습니다.' : status === 'trash' ? '휴지통으로 이동했습니다.' : status === 'draft' ? '행사를 복구했습니다.' : '행사 상태를 변경했습니다.'); } catch (error) { setNotice(error instanceof Error ? error.message : '상태 변경에 실패했습니다.'); }
   };
 
-  const createOrg = () => {
+  const createOrg = async () => {
     if (!orgName.trim()) return;
-    const organization = createOrganization(orgName);
-    commit({ ...state, organizations: [...state.organizations, organization] }, '단체를 등록했습니다.');
-    setOrgName('');
+    try { await repository.createOrganization(orgName); setState(await repository.load()); setNotice('단체를 등록했습니다.'); setOrgName(''); } catch (error) { setNotice(error instanceof Error ? error.message : '단체 등록에 실패했습니다.'); }
   };
-  const updateOrg = (organizationId: string, patch: Partial<Organization>) => {
-    const organizations = state.organizations.map((item) => item.id === organizationId ? { ...item, ...patch, updatedAt: new Date().toISOString() } : item);
-    commit({ ...state, organizations }, '단체 설정을 저장했습니다.');
+  const updateOrg = async (organizationId: string, patch: Partial<Organization>) => {
+    try { await repository.updateOrganization(organizationId, patch); setState(await repository.load()); setNotice('단체 설정을 저장했습니다.'); } catch (error) { setNotice(error instanceof Error ? error.message : '단체 설정 저장에 실패했습니다.'); }
   };
 
   const uploadLogo = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -75,10 +68,8 @@ const AdminApp = () => {
     const validationError = validateLogo(file);
     if (validationError) { setNotice(validationError); return; }
     try {
-      const dataUrl = await readImage(file);
-      const logo = createLogo({ id: '', name: file.name, mimeType: file.type as LogoAsset['mimeType'], size: file.size, width: dataUrl.width, height: dataUrl.height, dataUrl: dataUrl.url, createdAt: '' });
-      const next = { ...state, logos: [...state.logos, logo] };
-      commit(next, '로고를 임시 저장소에 등록했습니다.');
+      await readImage(file);
+      setNotice('파일 검증은 완료했지만 영구 이미지 저장소가 연결되지 않아 저장 기능은 준비 중입니다. 외부 HTTPS URL을 사용하세요.');
     } catch { setNotice('이미지 콘텐츠를 읽을 수 없습니다. PNG, JPEG, WebP 파일을 확인하세요.'); }
   };
 
@@ -88,15 +79,16 @@ const AdminApp = () => {
     try { await navigator.clipboard.writeText(url); setNotice('초대장 링크를 복사했습니다.'); } catch { setNotice(url); }
   };
 
+  if (loading) return <Shell><Body><Section><h2>관리자 데이터 불러오는 중</h2><p>Worker API 인증과 D1 연결을 확인하고 있습니다.</p></Section></Body></Shell>;
   return (
     <Shell>
-      <Header><div><Eyebrow>INVITE ADMIN · LOCAL</Eyebrow><h1>초대장 관리</h1></div><a href="/">공개 데모 보기</a></Header>
+      <Header><div><Eyebrow>INVITE ADMIN · API</Eyebrow><h1>초대장 관리</h1></div><a href="/">공개 데모 보기</a></Header>
       <Body>
         <Nav>{(['dashboard', 'events', 'organizations', 'logos', 'design'] as Tab[]).map((item) => <NavButton key={item} active={tab === item} onClick={() => setTab(item)}>{({ dashboard: '대시보드', events: '행사 관리', organizations: '단체 관리', logos: '로고 관리', design: '디자인 설정' } as Record<Tab, string>)[item]}</NavButton>)}</Nav>
         {notice && <Notice role="status">{notice}</Notice>}
         {tab === 'dashboard' && <Dashboard events={visibleEvents} onCreate={startCreate} onSelect={selectEvent} />}
         {tab === 'events' && <EventEditor draft={draft} setDraft={setDraft} errors={errors} organizations={state.organizations} logos={state.logos} selected={Boolean(selectedId)} onSave={saveEvent} onClone={cloneEvent} onStatus={changeStatus} onCopyLink={copyLink} previewLogo={draftLogo} />}
-        {tab === 'organizations' && <Organizations organizations={state.organizations} events={state.events} logos={state.logos} orgName={orgName} setOrgName={setOrgName} onCreate={createOrg} onUpdate={updateOrg} />}
+        {tab === 'organizations' && <Organizations organizations={state.organizations} events={state.events} logos={state.logos} orgName={orgName} setOrgName={setOrgName} onCreate={createOrg} onUpdate={updateOrg} onMessage={setNotice} />}
         {tab === 'logos' && <Logos logos={state.logos} organizations={state.organizations} onUpload={uploadLogo} />}
         {tab === 'design' && <DesignGuide />}
       </Body>
@@ -130,7 +122,7 @@ const EventEditor = ({ draft, setDraft, errors, organizations, logos, selected, 
         <Field label="영상 제목"><input value={draft.videoTitle} onChange={(event) => update('videoTitle', event.target.value)} /></Field>
       </Grid>
       <Panel><h3>지도·섹션</h3><Toggle label="지도 사용" checked={draft.mapSettings.enabled} onChange={() => update('mapSettings', { ...draft.mapSettings, enabled: !draft.mapSettings.enabled })} /><div className="checks">{(Object.keys(draft.sections) as (keyof EventRecord['sections'])[]).map((key) => <Toggle key={key} label={({ gallery: '갤러리', map: '지도', video: '동영상', contact: '연락처', guestbook: '방명록' } as Record<string, string>)[key]} checked={draft.sections[key]} onChange={() => updateSection(key)} />)}</div></Panel>
-      <Panel><h3>로고</h3><div className="row"><label>소스<select value={draft.logoSourceType} onChange={(event) => setLogoSource(event.target.value as EventRecord['logoSourceType'])}><option value="none">로고 없음</option><option value="upload">업로드 이미지</option><option value="url">외부 HTTPS URL</option></select></label>{draft.logoSourceType === 'upload' && <label>행사별 로고<select value={draft.customLogoId || ''} onChange={(event) => update('customLogoId', event.target.value || undefined)}><option value="">단체 기본 로고 사용</option>{logos.map((logo) => <option key={logo.id} value={logo.id}>{logo.name}</option>)}</select></label>}{draft.logoSourceType === 'url' && <label>로고 URL<input value={draft.logoExternalUrl || ''} onChange={(event) => update('logoExternalUrl', event.target.value)} placeholder="https://example.com/logo.png" /></label>}<label>위치<select value={draft.logoPosition} onChange={(event) => update('logoPosition', event.target.value as EventRecord['logoPosition'])}><option value="hidden">숨김</option><option value="top-center">상단 중앙</option><option value="top-left">상단 왼쪽</option><option value="bottom">하단</option></select></label><label>크기<select value={draft.logoSize} onChange={(event) => update('logoSize', event.target.value as EventRecord['logoSize'])}><option value="small">작게</option><option value="medium">보통</option><option value="large">크게</option></select></label></div><Toggle label="로고 표시" checked={draft.logoVisible} onChange={() => update('logoVisible', !draft.logoVisible)} /></Panel>
+      <Panel><h3>로고</h3><div className="row"><label>소스<select value={draft.logoSourceType} onChange={(event) => setLogoSource(event.target.value as EventRecord['logoSourceType'])}><option value="none">로고 없음</option><option value="upload">업로드 이미지</option><option value="url">외부 HTTPS URL</option></select></label>{draft.logoSourceType === 'upload' && <label>행사별 로고<select value={draft.customLogoId || ''} onChange={(event) => update('customLogoId', event.target.value || undefined)}><option value="">단체 기본 로고 사용</option>{logos.map((logo) => <option key={logo.id} value={logo.id}>{logo.name}</option>)}</select></label>}{draft.logoSourceType === 'url' && <Field label="로고 URL" error={errors.logoExternalUrl}><input value={draft.logoExternalUrl || ''} onChange={(event) => update('logoExternalUrl', event.target.value)} placeholder="https://example.com/logo.png" /></Field>}<label>위치<select value={draft.logoPosition} onChange={(event) => update('logoPosition', event.target.value as EventRecord['logoPosition'])}><option value="hidden">숨김</option><option value="top-center">상단 중앙</option><option value="top-left">상단 왼쪽</option><option value="bottom">하단</option></select></label><label>크기<select value={draft.logoSize} onChange={(event) => update('logoSize', event.target.value as EventRecord['logoSize'])}><option value="small">작게</option><option value="medium">보통</option><option value="large">크게</option></select></label></div><Toggle label="로고 표시" checked={draft.logoVisible} onChange={() => update('logoVisible', !draft.logoVisible)} /></Panel>
       <Panel><h3>배경 디자인</h3><BackgroundChoices value={draft.themeSettings.backgroundPresetId} onChange={updateThemePreset} /></Panel>
       <Panel><h3>폰트·색상</h3><div className="row"><label>제목 폰트<select value={draft.fontSettings.title} onChange={(event) => update('fontSettings', { ...draft.fontSettings, title: event.target.value as EventRecord['fontSettings']['title'] })}>{FONT_OPTIONS.map((font) => <option key={font.id} value={font.id}>{font.label}</option>)}</select></label><label>본문 폰트<select value={draft.fontSettings.body} onChange={(event) => update('fontSettings', { ...draft.fontSettings, body: event.target.value as EventRecord['fontSettings']['body'] })}>{FONT_OPTIONS.map((font) => <option key={font.id} value={font.id}>{font.label}</option>)}</select></label><label>강조 색상<input type="color" value={draft.themeSettings.accentColor} onChange={(event) => update('themeSettings', { ...draft.themeSettings, accentColor: event.target.value })} /></label></div></Panel>
       <Actions><Primary type="submit">임시저장</Primary>{selected && <><button type="button" onClick={() => onStatus(draft.publicationStatus === 'public' ? 'private' : 'public')}>{draft.publicationStatus === 'public' ? '비공개 전환' : '공개 전환'}</button><button type="button" onClick={onClone}>복제</button><button type="button" onClick={() => onStatus(draft.publicationStatus === 'trash' ? 'draft' : 'trash')}>{draft.publicationStatus === 'trash' ? '복구' : '휴지통'}</button><button type="button" onClick={onCopyLink}>링크 복사</button></>}</Actions>
@@ -138,7 +130,7 @@ const EventEditor = ({ draft, setDraft, errors, organizations, logos, selected, 
   </Section>;
 };
 
-const Organizations = ({ organizations, events, logos, orgName, setOrgName, onCreate, onUpdate }: { organizations: Organization[]; events: EventRecord[]; logos: LogoAsset[]; orgName: string; setOrgName: (value: string) => void; onCreate: () => void; onUpdate: (id: string, patch: Partial<Organization>) => void }) => <Section><SectionHead><div><h2>단체 관리</h2><p>단체 기본 로고는 여러 행사에서 재사용됩니다.</p></div></SectionHead><div className="row"><input value={orgName} onChange={(event) => setOrgName(event.target.value)} placeholder="단체명" /><Primary onClick={onCreate}>단체 등록</Primary></div><List>{organizations.map((org) => <ListItem key={org.id}><div><strong>{org.name}</strong><small>{events.filter((event) => event.organizationId === org.id).length}개 행사</small></div><label>기본 로고<select value={org.defaultLogoId || ''} onChange={(event) => onUpdate(org.id, { defaultLogoId: event.target.value || undefined, defaultLogoSourceType: event.target.value ? 'upload' : 'none' })}><option value="">로고 없음</option>{logos.map((logo) => <option key={logo.id} value={logo.id}>{logo.name}</option>)}</select></label></ListItem>)}</List></Section>;
+const Organizations = ({ organizations, events, logos, orgName, setOrgName, onCreate, onUpdate, onMessage }: { organizations: Organization[]; events: EventRecord[]; logos: LogoAsset[]; orgName: string; setOrgName: (value: string) => void; onCreate: () => void; onUpdate: (id: string, patch: Partial<Organization>) => void; onMessage: (value: string) => void }) => <Section><SectionHead><div><h2>단체 관리</h2><p>단체 기본 로고는 여러 행사에서 재사용됩니다.</p></div></SectionHead><div className="row"><input value={orgName} onChange={(event) => setOrgName(event.target.value)} placeholder="단체명" /><Primary onClick={onCreate}>단체 등록</Primary></div><List>{organizations.map((org) => <ListItem key={org.id}><div><strong>{org.name}</strong><small>{events.filter((event) => event.organizationId === org.id).length}개 행사</small></div><label>기본 로고 방식<select value={org.defaultLogoSourceType || 'none'} onChange={(event) => onUpdate(org.id, { defaultLogoSourceType: event.target.value as Organization['defaultLogoSourceType'] })}><option value="none">로고 없음</option><option value="upload">업로드 이미지</option><option value="url">외부 HTTPS URL</option></select></label>{org.defaultLogoSourceType === 'upload' && <label>업로드 로고<select value={org.defaultLogoId || ''} onChange={(event) => onUpdate(org.id, { defaultLogoId: event.target.value || undefined })}><option value="">선택하세요</option>{logos.map((logo) => <option key={logo.id} value={logo.id}>{logo.name}</option>)}</select></label>}{org.defaultLogoSourceType === 'url' && <label>기본 로고 URL<input defaultValue={org.defaultLogoExternalUrl || ''} placeholder="https://example.com/logo.png" onBlur={(event) => { const error = validateLogoUrl(event.target.value); if (error) { onMessage(error); return; } onUpdate(org.id, { defaultLogoExternalUrl: event.target.value }); }} /></label>}</ListItem>)}</List></Section>;
 
 const Logos = ({ logos, organizations, onUpload }: { logos: LogoAsset[]; organizations: Organization[]; onUpload: (event: ChangeEvent<HTMLInputElement>) => void }) => <Section><SectionHead><div><h2>로고 관리</h2><p>PNG, JPEG, WebP · 2MiB 이하 · 로컬 테스트 저장소</p></div><label className="upload"><input type="file" accept="image/png,image/jpeg,image/webp" onChange={onUpload} />로고 업로드</label></SectionHead><List>{logos.map((logo) => <ListItem key={logo.id}><img className="logo-thumb" src={logo.dataUrl} alt={logo.name} /><div><strong>{logo.name}</strong><small>{logo.mimeType} · {(logo.size / 1024).toFixed(1)}KiB · {logo.width}×{logo.height}</small></div><span>{organizations.some((org) => org.defaultLogoId === logo.id) ? '단체 기본' : '행사 선택 가능'}</span></ListItem>)}</List></Section>;
 

@@ -7,11 +7,12 @@ export const validatePayload = (payload: Record<string, unknown>) => {
   if (typeof payload.slug === 'string' && !/^[a-z0-9가-힣][a-z0-9가-힣-]{0,63}$/.test(payload.slug)) errors.slug = 'invalid slug';
   if (payload.publicationStatus && !allowedStatuses.has(String(payload.publicationStatus))) errors.publicationStatus = 'invalid status';
   if (payload.logoSourceType && !allowedLogoSources.has(String(payload.logoSourceType))) errors.logoSourceType = 'invalid logo source';
+  if (payload.logoSourceType === 'url' && !payload.logoExternalUrl) errors.logoExternalUrl = '외부 로고 URL을 입력하세요.';
   if (payload.logoExternalUrl) {
     try { const url = new URL(String(payload.logoExternalUrl)); if (url.protocol !== 'https:' || url.username || url.password || url.hostname === 'localhost' || url.hostname === '127.0.0.1') errors.logoExternalUrl = 'invalid external logo URL'; } catch { errors.logoExternalUrl = 'invalid external logo URL'; }
   }
   if (payload.videoUrl) {
-    try { const url = new URL(String(payload.videoUrl)); if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(url.hostname.toLowerCase())) errors.videoUrl = 'YouTube URL required'; } catch { errors.videoUrl = 'invalid video URL'; }
+    try { const url = new URL(String(payload.videoUrl)); if (url.protocol !== 'https:' || !['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(url.hostname.toLowerCase())) errors.videoUrl = 'YouTube URL required'; } catch { errors.videoUrl = 'invalid video URL'; }
   }
   return errors;
 };
