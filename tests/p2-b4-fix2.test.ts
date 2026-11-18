@@ -22,7 +22,7 @@ test('API proxy preserves path, method, body and Access JWT without production f
   let forwarded: { url: string; init?: RequestInit } | undefined;
   globalThis.fetch = async (input, init) => {
     forwarded = { url: String(input), init };
-    return new Response('{"ok":true}', { status: 201, headers: { 'content-type': 'application/json' } });
+    return new Response('{"ok":true}', { status: 201, headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=3600' } });
   };
   try {
     const request = new Request('https://staging.pages.dev/api/admin/events?draft=1', {
@@ -36,7 +36,9 @@ test('API proxy preserves path, method, body and Access JWT without production f
     assert.equal(forwarded?.init?.method, 'POST');
     assert.equal((forwarded?.init?.headers as Headers).get('Cf-Access-Jwt-Assertion'), 'synthetic-jwt');
     assert.equal(await new Response(forwarded?.init?.body).text(), '{"title":"synthetic"}');
+    assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal((await proxyApiRequest(new Request('https://staging.pages.dev/api/public/events/demo'), undefined)).status, 503);
+    assert.equal((await proxyApiRequest(new Request('https://staging.pages.dev/api/admin/events', { method: 'PUT' }), 'https://staging-api.example.workers.dev')).status, 405);
   } finally {
     globalThis.fetch = originalFetch;
   }
