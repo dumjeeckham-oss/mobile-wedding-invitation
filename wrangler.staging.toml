@@ -1,0 +1,10 @@
+name = "invite-p2-staging-api"
+main = "worker/index.ts"
+compatibility_date = "2026-11-18"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "invite-p2-staging-db"
+database_id = "83fbcbee-14f5-44c8-854c-3fa5e521f4fa"
+migrations_dir = "worker/migrations"
