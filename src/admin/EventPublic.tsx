@@ -7,11 +7,12 @@ import { toEvent } from './repository.ts';
 import { normalizeThemeSettings, validateBackgroundUrl } from './validation.ts';
 import { EventRecord } from './types.ts';
 import { getKakaoMapLinks, getNaverMapLinks, getYouTubeEmbedUrl, openExternalAppOrWeb } from '@/utils/externalLinks.ts';
+import { apiBase } from '../apiBase.ts';
 
 const EventPublic = ({ slug }: { slug: string }) => {
   const [event, setEvent] = useState<EventRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { const base = String(import.meta.env.VITE_ADMIN_API_BASE_URL || ''); fetch(`${base}/api/public/events/${encodeURIComponent(slug)}`).then(async (response) => response.ok ? toEvent(await response.json()) : null).then(setEvent).catch(() => setEvent(null)).finally(() => setLoading(false)); }, [slug]);
+  useEffect(() => { fetch(`${apiBase}/api/public/events/${encodeURIComponent(slug)}`).then(async (response) => response.ok ? toEvent(await response.json()) : null).then(setEvent).catch(() => setEvent(null)).finally(() => setLoading(false)); }, [slug]);
   if (loading) return <NotFound>초대장을 불러오는 중입니다.</NotFound>;
   if (!event) return <NotFound>공개된 초대장을 찾을 수 없습니다.</NotFound>;
   return <Invitation event={event} />;

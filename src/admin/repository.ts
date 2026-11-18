@@ -1,6 +1,7 @@
 import { createEvent as createLocalEvent, createOrganization as createLocalOrganization, loadState, saveState } from './localRepository.ts';
 import { AdminState, EventRecord, Organization } from './types.ts';
 import { normalizeThemeSettings } from './validation.ts';
+import { apiBase } from '../apiBase.ts';
 
 export interface AdminRepository {
   load(): Promise<AdminState>;
@@ -41,7 +42,7 @@ class LocalTestRepository implements AdminRepository {
 }
 
 class WorkerApiRepository implements AdminRepository {
-  private readonly base = String(import.meta.env.VITE_ADMIN_API_BASE_URL || '');
+  private readonly base = apiBase;
   private readonly testJwt = import.meta.env.DEV ? String(import.meta.env.VITE_ADMIN_TEST_JWT || '') : '';
   private async request(path: string, init?: RequestInit) { const headers = new Headers(init?.headers); headers.set('content-type', 'application/json'); if (this.testJwt) headers.set('Cf-Access-Jwt-Assertion', this.testJwt); return parseJson(await fetch(`${this.base}${path}`, { ...init, headers })); }
   async load() { const [events, organizations] = await Promise.all([this.request('/api/admin/events'), this.request('/api/admin/organizations')]); return { events: events.map(toEvent), organizations: organizations.map(toOrganization), logos: [] }; }
