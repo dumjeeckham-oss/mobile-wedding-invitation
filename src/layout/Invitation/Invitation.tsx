@@ -8,7 +8,16 @@ const Invitation = () => {
   const { greeting } = data;
   return (
     <InvitationWrapper>
-      <Paragraph>{greeting.message}</Paragraph>
+      <Paragraph>{data.event?.intro || greeting.message}</Paragraph>
+      {data.event && (
+        <EventMeta>
+          <MetaLine>{data.event.type}</MetaLine>
+          {data.event.dateTime && <MetaLine>{data.event.dateTime}</MetaLine>}
+          {data.event.venue && <MetaLine>{data.event.venue}</MetaLine>}
+          {data.event.address && <MetaLine>{data.event.address}</MetaLine>}
+          {data.event.detail && <Caption textAlign="center">{data.event.detail}</Caption>}
+        </EventMeta>
+      )}
       <Host />
       <Caption textAlign={'center'}>{greeting.eventDetail}</Caption>
       <RoundButton as="span">
@@ -25,4 +34,15 @@ const InvitationWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 20px;
+`;
+
+const EventMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+`;
+
+const MetaLine = styled.span`
+  color: #4f4f4f;
 `;

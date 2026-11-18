@@ -16,6 +16,18 @@
     },
     "eventDetail": "상시 열람 가능한 가상 행사\n실제 방문·참여가 필요하지 않습니다."
   },
+  "event": {
+    "title": "모바일 초대장 디자인 샘플",
+    "organizer": "데모 행사 운영팀",
+    "type": "공개 디자인 데모",
+    "intro": "기관·단체·개인 행사를 위한 범용 모바일 초대장 샘플입니다.",
+    "dateTime": "",
+    "venue": "",
+    "address": "",
+    "detail": "실제 행사가 아닌 디자인 시연용 콘텐츠입니다.",
+    "showContact": false,
+    "showGallery": true
+  },
   "hostInfo": [
     {
       "host": "공개 데모",
@@ -23,12 +35,20 @@
     }
   ],
   "mapInfo": {
+    "enabled": false,
     "address1": "온라인 디자인 시연 공간",
     "address2": "실제 방문 장소가 아니며 외부 지도 링크를 제공하지 않습니다.",
     "naverMap": "",
     "kakaoMap": "",
     "lat": 0,
-    "lon": 0
+    "lon": 0,
+    "parking": "공개 데모에는 주차 안내가 없습니다.",
+    "transit": "공개 데모에는 대중교통 안내가 없습니다."
+  },
+  "video": {
+    "enabled": false,
+    "title": "행사 영상",
+    "url": ""
   },
   "locationInfo": [
     {

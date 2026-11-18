@@ -4,6 +4,9 @@ import data from 'data.json';
 import { BrideAndGroom } from '@/types/data.ts';
 
 const Host = () => {
+  if (data.event?.organizer) {
+    return <EventHost>{data.event.organizer}</EventHost>;
+  }
   const { groom, bride } = data.greeting.host;
   return (
     <>
@@ -14,6 +17,12 @@ const Host = () => {
     </>
   );
 };
+
+const EventHost = styled.p`
+  font-weight: 600;
+  color: #4f4f4f;
+  margin: 0;
+`;
 
 export default Host;
 

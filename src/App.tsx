@@ -8,6 +8,8 @@ import Guestbook from '@/layout/Guestbook/Guestbook.tsx';
 import Invitation from '@/layout/Invitation/Invitation.tsx';
 import Location from '@/layout/Location/Location.tsx';
 import Main from '@/layout/Main/Main.tsx';
+import VideoSection from '@/layout/Video/VideoSection.tsx';
+import data from 'data.json';
 
 function App() {
   const [isVisible, setIsVisible] = useState(false);
@@ -42,10 +44,18 @@ function App() {
         <Heading1>데모 안내</Heading1>
         <Invitation />
       </Wrapper>
-      <Wrapper ref={galleryRef}>
-        <Heading1>Gallery</Heading1>
-        <GalleryWrap />
-      </Wrapper>
+      {data.video?.enabled && (
+        <Wrapper>
+          <Heading1>영상</Heading1>
+          <VideoSection />
+        </Wrapper>
+      )}
+      {data.event?.showGallery !== false && (
+        <Wrapper ref={galleryRef}>
+          <Heading1>Gallery</Heading1>
+          <GalleryWrap />
+        </Wrapper>
+      )}
       <Wrapper>
         <Heading1>데모 위치 안내</Heading1>
         <Location />

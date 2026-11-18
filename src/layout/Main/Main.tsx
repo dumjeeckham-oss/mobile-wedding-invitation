@@ -4,10 +4,11 @@ import mainImg from '@/assets/images/demo-01.png';
 
 const Main = () => {
   const { greeting } = data;
+  const title = data.event?.title || greeting.title;
   return (
     <div>
       <MainImg src={mainImg} />
-      <MainTitle>{greeting.title}</MainTitle>
+      <MainTitle>{title}</MainTitle>
       <SubTitle>{greeting.eventDetail}</SubTitle>
     </div>
   );
