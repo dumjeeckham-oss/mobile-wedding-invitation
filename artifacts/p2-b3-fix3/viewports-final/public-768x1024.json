@@ -1,0 +1,26 @@
+{
+  "kind": "public",
+  "requestedViewport": {
+    "width": 768,
+    "height": 1024
+  },
+  "viewport": {
+    "width": 768,
+    "height": 1024
+  },
+  "document": {
+    "scrollWidth": 753,
+    "clientWidth": 753,
+    "scrollHeight": 1297,
+    "clientHeight": 1024
+  },
+  "horizontalOverflow": false,
+  "elements": {
+    "heading": true,
+    "gallery": true,
+    "buttons": 0,
+    "images": 3,
+    "iframe": 1,
+    "mapLinks": 4
+  }
+}
