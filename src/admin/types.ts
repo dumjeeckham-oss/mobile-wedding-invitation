@@ -32,6 +32,14 @@ export interface EventSections {
   guestbook: boolean;
 }
 
+export interface GalleryImage {
+  source: string;
+  thumbnail?: string;
+  width: number;
+  height: number;
+  alt: string;
+}
+
 export interface FontSettings {
   title: FontId;
   body: FontId;
@@ -81,6 +89,7 @@ export interface EventRecord {
   mapSettings: { naverUrl?: string; kakaoUrl?: string; enabled: boolean };
   videoUrl: string;
   videoTitle: string;
+  gallery: GalleryImage[];
   fontSettings: FontSettings;
   themeSettings: ThemeSettings;
   sections: EventSections;
@@ -91,6 +100,33 @@ export interface EventRecord {
   deletedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PublicEventDTO {
+  id: string;
+  slug: string;
+  title: string;
+  eventType: string;
+  host: string;
+  intro: string;
+  eventDateTime: string;
+  venue: string;
+  address: string;
+  coordinates?: { lat: number; lon: number };
+  transportationInfo: string;
+  parkingInfo: string;
+  mapSettings: EventRecord['mapSettings'];
+  videoUrl: string;
+  videoTitle: string;
+  fontSettings: FontSettings;
+  themeSettings: ThemeSettings;
+  sections: EventSections;
+  gallery: GalleryImage[];
+  logoSourceType: LogoSourceType;
+  logoExternalUrl?: string;
+  logoPosition: LogoPosition;
+  logoSize: LogoSize;
+  logoVisible: boolean;
 }
 
 export interface AdminState {

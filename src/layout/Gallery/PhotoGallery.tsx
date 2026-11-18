@@ -1,8 +1,9 @@
 import { Gallery, Item } from 'react-photoswipe-gallery';
 import 'photoswipe/style.css';
 import images from '@/layout/Gallery/Images.ts';
+import type { GalleryImage } from '../../admin/types.ts';
 
-const PhotoGallery = () => {
+const PhotoGallery = ({ items = images }: { items?: GalleryImage[] }) => {
   const smallItemStyles: React.CSSProperties = {
     cursor: 'pointer',
     objectFit: 'cover', // 전체 이미지가 보이도록 맞추고 싶을 때는 contain / 비율 유지하고 싶을 때는 cover
@@ -18,7 +19,7 @@ const PhotoGallery = () => {
           gridTemplateColumns: 'repeat(3, 0fr)',
           gridGap: 2,
         }}>
-        {images.map((image, index) => {
+        {items.map((image, index) => {
           return (
             <Item
               key={index}

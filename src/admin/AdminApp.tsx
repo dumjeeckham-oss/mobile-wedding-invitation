@@ -10,7 +10,7 @@ type Tab = 'dashboard' | 'events' | 'organizations' | 'logos' | 'design';
 
 const newEvent = (): EventRecord => {
   const timestamp = new Date().toISOString();
-  return { id: '', slug: 'new-event', title: '', eventType: '일반 행사', host: '', intro: '', eventDateTime: '', venue: '', address: '', transportationInfo: '', parkingInfo: '', mapSettings: { enabled: false }, videoUrl: '', videoTitle: '', fontSettings: { title: 'noto-serif-kr', body: 'noto-sans-kr', titleSize: 32, bodySize: 16 }, themeSettings: { backgroundPresetId: 'classic-ivory', backgroundColor: '#fffaf0', textColor: '#3d3028', accentColor: '#a26d52' }, sections: { gallery: true, map: true, video: false, contact: false, guestbook: false }, logoSourceType: 'none', logoPosition: 'hidden', logoSize: 'medium', logoVisible: false, publicationStatus: 'draft', createdAt: timestamp, updatedAt: timestamp };
+  return { id: '', slug: 'new-event', title: '', eventType: '일반 행사', host: '', intro: '', eventDateTime: '', venue: '', address: '', transportationInfo: '', parkingInfo: '', mapSettings: { enabled: false }, videoUrl: '', videoTitle: '', gallery: [], fontSettings: { title: 'noto-serif-kr', body: 'noto-sans-kr', titleSize: 32, bodySize: 16 }, themeSettings: { backgroundPresetId: 'classic-ivory', backgroundColor: '#fffaf0', textColor: '#3d3028', accentColor: '#a26d52' }, sections: { gallery: true, map: true, video: false, contact: false, guestbook: false }, logoSourceType: 'none', logoPosition: 'hidden', logoSize: 'medium', logoVisible: false, publicationStatus: 'draft', createdAt: timestamp, updatedAt: timestamp };
 };
 
 const AdminApp = () => {
@@ -25,7 +25,7 @@ const AdminApp = () => {
   const [orgName, setOrgName] = useState('');
   const mounted = useRef(true);
 
-  useEffect(() => { repository.load().then((loaded) => { if (mounted.current) { setState(loaded); setLoading(false); } }).catch((error: Error) => { if (mounted.current) { setNotice(error.message); setLoading(false); } }); return () => { mounted.current = false; }; }, [repository]);
+  useEffect(() => { mounted.current = true; repository.load().then((loaded) => { if (mounted.current) { setState(loaded); setLoading(false); } }).catch((error: Error) => { if (mounted.current) { setNotice(error.message); setLoading(false); } }); return () => { mounted.current = false; }; }, [repository]);
 
   const activeEvent = state.events.find((event) => event.id === selectedId);
   const visibleEvents = state.events.filter((event) => !event.deletedAt);
@@ -39,7 +39,7 @@ const AdminApp = () => {
     const result = validateEvent(draft, state.events, selectedId || undefined);
     setErrors(result.errors);
     if (Object.keys(result.errors).length) return;
-    const normalized = { ...draft, slug: result.slug, id: selectedId || crypto.randomUUID(), updatedAt: new Date().toISOString(), createdAt: selectedId ? draft.createdAt : new Date().toISOString() };
+    const normalized = { ...draft, slug: result.slug, id: selectedId || crypto.randomUUID(), updatedAt: selectedId ? draft.updatedAt : '', createdAt: selectedId ? draft.createdAt : new Date().toISOString() };
     try { const saved = await repository.saveEvent(normalized, selectedId || undefined); const refreshed = await repository.load(); setState(refreshed); setNotice('서버에 행사를 저장했습니다.'); setSelectedId(saved.id); setDraft(saved); } catch (error) { setNotice(error instanceof Error ? error.message : '저장에 실패했습니다. 입력 내용을 유지합니다.'); }
   };
 
@@ -116,6 +116,7 @@ const EventEditor = ({ draft, setDraft, errors, organizations, logos, selected, 
         <Field label="장소"><input value={draft.venue} onChange={(event) => update('venue', event.target.value)} /></Field>
         <Field label="주소"><input value={draft.address} onChange={(event) => update('address', event.target.value)} /></Field>
         <Field wide label="소개 문구"><textarea value={draft.intro} onChange={(event) => update('intro', event.target.value)} /></Field>
+        <Field wide label="갤러리 이미지 URL (한 줄에 하나)" error={errors.gallery}><textarea value={draft.gallery.map((image) => image.source).join('\n')} placeholder="https://example.com/image.jpg" onChange={(event) => update('gallery', event.target.value.split('\n').map((source) => source.trim()).filter(Boolean).map((source) => ({ source, thumbnail: source, width: 1200, height: 800, alt: draft.title || '행사 이미지' })))} /></Field>
         <Field wide label="대중교통 안내"><textarea value={draft.transportationInfo} onChange={(event) => update('transportationInfo', event.target.value)} /></Field>
         <Field wide label="주차 안내"><textarea value={draft.parkingInfo} onChange={(event) => update('parkingInfo', event.target.value)} /></Field>
         <Field label="YouTube URL" error={errors.videoUrl}><input value={draft.videoUrl} onChange={(event) => update('videoUrl', event.target.value)} placeholder="https://youtu.be/..." /></Field>

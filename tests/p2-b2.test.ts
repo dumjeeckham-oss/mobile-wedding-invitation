@@ -98,6 +98,16 @@ test('public event response is filtered and includes CORS headers', async () => 
   assert.equal('organization_id' in payload, false);
 });
 
+test('admin CORS allows only explicit local origins', async () => {
+  const db = new FakeDb();
+  const env = { DB: db, ACCESS_ISSUER: 'https://access.example.com', ACCESS_AUDIENCE: 'invite-admin', ADMIN_EMAIL: 'admin@example.com' };
+  const blocked = await worker.fetch(new Request('https://local/api/admin/events', { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } }), env);
+  assert.equal(blocked.status, 403);
+  const allowed = await worker.fetch(new Request('https://local/api/admin/events', { method: 'OPTIONS', headers: { Origin: 'http://127.0.0.1:5173' } }), env);
+  assert.equal(allowed.status, 204);
+  assert.equal(allowed.headers.get('access-control-allow-origin'), 'http://127.0.0.1:5173');
+});
+
 test('preview token is event-bound and expires', async () => {
   const token = await createPreviewToken('event-1', 'local-preview-secret', 60);
   assert.equal(await verifyPreviewToken(token, 'event-1', 'local-preview-secret'), true);

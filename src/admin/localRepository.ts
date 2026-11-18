@@ -12,7 +12,7 @@ const initialState = (): AdminState => {
     logos: [],
     events: [{
       id: id('evt'), slug: 'design-sample', organizationId: organization.id, title: '모바일 초대장 디자인 샘플', eventType: '공개 디자인 데모', host: organization.name, logoSourceType: 'none',
-      intro: '실제 행사가 아닌 디자인 시연용 초대장입니다.', eventDateTime: '', venue: '온라인 디자인 시연 공간', address: '', transportationInfo: '', parkingInfo: '',
+      intro: '실제 행사가 아닌 디자인 시연용 초대장입니다.', eventDateTime: '', venue: '온라인 디자인 시연 공간', address: '', transportationInfo: '', parkingInfo: '', gallery: [],
       mapSettings: { enabled: false }, videoUrl: '', videoTitle: '', fontSettings: { title: 'noto-serif-kr', body: 'noto-sans-kr', titleSize: 32, bodySize: 16 },
       themeSettings: { backgroundPresetId: 'classic-ivory', backgroundColor: '#fffaf0', textColor: '#3d3028', accentColor: '#a26d52' }, sections: { gallery: true, map: true, video: false, contact: false, guestbook: false },
       logoPosition: 'hidden', logoSize: 'medium', logoVisible: false, publicationStatus: 'public', createdAt: timestamp, updatedAt: timestamp,

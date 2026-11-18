@@ -29,6 +29,7 @@ export const validateEvent = (event: Partial<EventRecord>, existing: EventRecord
   if (event.coordinates && (!Number.isFinite(event.coordinates.lat) || !Number.isFinite(event.coordinates.lon) || event.coordinates.lat < -90 || event.coordinates.lat > 90 || event.coordinates.lon < -180 || event.coordinates.lon > 180)) {
     errors.coordinates = '좌표 범위를 확인하세요.';
   }
+  if (event.gallery?.some((image) => { if (image.source.startsWith('/')) return false; try { return new URL(image.source).protocol !== 'https:'; } catch { return true; } })) errors.gallery = '갤러리 이미지는 HTTPS URL 또는 사이트 내부 경로만 사용할 수 있습니다.';
   return { errors, slug };
 };
 
