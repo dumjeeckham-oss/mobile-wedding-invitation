@@ -11,12 +11,8 @@ const Invitation = () => {
       <Paragraph>{greeting.message}</Paragraph>
       <Host />
       <Caption textAlign={'center'}>{greeting.eventDetail}</Caption>
-      {/* TODO: 구글캘린더 추가하기 기능을 넣는다면 링크 수정 */}
-      <RoundButton
-        target="_blank"
-        href=""
-        rel="noreferrer">
-        구글 캘린더 추가하기
+      <RoundButton as="span">
+        공개 데모에서는 캘린더 등록을 제공하지 않습니다.
       </RoundButton>
     </InvitationWrapper>
   );

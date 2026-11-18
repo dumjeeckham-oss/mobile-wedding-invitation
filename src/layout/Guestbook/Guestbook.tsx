@@ -6,9 +6,9 @@ const Guestbook = () => {
   return (
     <GuestBookWrapper>
       <Heading2>
-        메시지를 남겨주세요.
+        메시지 입력 기능을 미리 확인해 보세요.
         <br />
-        결혼식 하루 뒤, 신랑 신부에게 전달됩니다.
+        공개 데모에서는 입력 내용이 저장되거나 전달되지 않습니다.
       </Heading2>
       <CommentForm />
     </GuestBookWrapper>

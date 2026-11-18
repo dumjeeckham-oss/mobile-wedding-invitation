@@ -4,7 +4,17 @@ import AccountWrap from './AccountWrap.tsx';
 import Accordion from '@/components/Accordion.tsx';
 
 const Account = () => {
-  const { hostInfo } = data;
+  const hostInfo = data.hostInfo as Array<{
+    host: string;
+    accountInfo: Array<{
+      name: string;
+      relation: string;
+      bank: string;
+      account: string;
+      kakaopayAccount?: string;
+      tossAccount?: string;
+    }>;
+  }>;
   return (
     <HostInfoWrapper>
       {hostInfo.map((host) => {

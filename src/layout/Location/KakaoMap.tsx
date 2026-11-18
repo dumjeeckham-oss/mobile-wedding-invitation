@@ -5,7 +5,7 @@ const KakaoMap = () => {
   const kakaoMapKey = import.meta.env.VITE_APP_KAKAOMAP_JAVASCRIPT_KEY;
 
   if (!kakaoMapKey) {
-    return <div>카카오맵 API 키가 설정되지 않았습니다. 아래 지도 링크를 이용해 주세요.</div>;
+    return <div>공개 데모에서는 외부 지도 링크를 제공하지 않습니다.</div>;
   }
 
   return <KakaoMapWithApi appkey={kakaoMapKey} />;

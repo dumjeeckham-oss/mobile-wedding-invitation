@@ -5,6 +5,10 @@ import Button from '@/components/Button.tsx';
 const MapButtons = () => {
   const { naverMap, kakaoMap } = data.mapInfo;
 
+  if (!naverMap && !kakaoMap) {
+    return null;
+  }
+
   return (
     <MapButtonWrapper>
       <Button onClick={() => window.open(naverMap)}>네이버 지도</Button>

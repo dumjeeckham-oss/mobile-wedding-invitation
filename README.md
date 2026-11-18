@@ -57,11 +57,13 @@ npm run dev
 
 - [ ] `src/data.json` 청첩장에 들어갈 정보를 수정합니다.
 - [ ] `index.html` 파비콘, title, og tag에 쓰일 meta tag 등을 수정합니다.
-- [ ] `public/thumbnail.jpg` 썸네일 사진을 수정합니다.
-- [ ] `assets/images`에 갤러리에 들어갈 사진을 넣고, `src/layout/Gallery/Images.ts` 에서 import합니다. 이곳에서 사진에 맞게 사이즈를 수정합니다.
+- [ ] `public/thumbnail.png` 공개용 썸네일을 수정합니다.
+- [ ] `src/assets/images`에 공개 권한이 확인된 이미지만 넣고, `src/layout/Gallery/Images.ts` 에서 import합니다. 공개 데모에는 개인 사진과 개인정보를 포함하지 않습니다.
 - [ ] `.env` VITE_APP_KAKAOMAP_JAVASCRIPT_KEY=javascript_key 입력이 필요합니다.
 - [ ] (선택) `src/firebase.ts` likes, 방명록을 사용한다면 firebase sdk 설정이 필요합니다.
 - [ ] (선택) `src/data.json` 혼주 계좌번호 작성시 `kakaopayAccount`, `tossAccount` 항목을 이용해 카카오페이나 토스 링크를 추가할 수 있습니다.
+
+공개 데모 브랜치는 실제 인물·장소·연락처·계좌번호를 사용하지 않는 가상 콘텐츠로 구성되어 있습니다. 실제 행사에 사용할 때는 공개 권한과 개인정보 보호를 별도로 확인하세요.
 
 ## Clone 후, 바로 배포하기
 
