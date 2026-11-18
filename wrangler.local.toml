@@ -1,0 +1,9 @@
+# Local-only D1 configuration. Do not use this file with --remote.
+name = "invite-local"
+compatibility_date = "2026-11-18"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "invite-local"
+database_id = "local-only"
+migrations_dir = "worker/migrations"

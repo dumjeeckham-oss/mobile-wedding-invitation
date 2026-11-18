@@ -10,8 +10,10 @@ import Location from '@/layout/Location/Location.tsx';
 import Main from '@/layout/Main/Main.tsx';
 import VideoSection from '@/layout/Video/VideoSection.tsx';
 import data from 'data.json';
+import AdminApp from './admin/AdminApp.tsx';
+import EventPublic from './admin/EventPublic.tsx';
 
-function App() {
+function DemoInvitation() {
   const [isVisible, setIsVisible] = useState(false);
   const galleryRef = useRef(null);
 
@@ -67,6 +69,13 @@ function App() {
       <FloatingBar isVisible={isVisible} />
     </Container>
   );
+}
+
+function App() {
+  const path = window.location.pathname;
+  if (path === '/admin' || path === '/admin/') return <AdminApp />;
+  if (path.startsWith('/e/')) return <EventPublic slug={decodeURIComponent(path.slice(3))} />;
+  return <DemoInvitation />;
 }
 
 export default App;
