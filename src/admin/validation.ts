@@ -3,6 +3,8 @@ import { EventRecord, LogoAsset, Organization } from './types.ts';
 
 export const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 export const LOGO_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
+export const MAX_BACKGROUND_BYTES = 2 * 1024 * 1024;
+export const BACKGROUND_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
 
 export const slugify = (value: string) => value.trim().toLowerCase()
   .replace(/[^a-z0-9가-힣]+/g, '-')
@@ -19,6 +21,13 @@ export const validateEvent = (event: Partial<EventRecord>, existing: EventRecord
     errors.slug = '이미 사용 중인 행사 URL입니다.';
   }
   if (event.videoUrl && !getYouTubeVideoId(event.videoUrl)) errors.videoUrl = 'YouTube watch, youtu.be 또는 shorts 링크만 사용할 수 있습니다.';
+  if (event.themeSettings?.backgroundSourceType === 'url') {
+    if (!event.themeSettings.backgroundImageUrl) errors.backgroundImageUrl = '배경 이미지 URL을 입력하세요.';
+    else {
+      const backgroundUrlError = validateBackgroundUrl(event.themeSettings.backgroundImageUrl);
+      if (backgroundUrlError) errors.backgroundImageUrl = backgroundUrlError;
+    }
+  }
   if (event.logoSourceType === 'url') {
     if (!event.logoExternalUrl) errors.logoExternalUrl = '외부 로고 URL을 입력하세요.';
     else {
@@ -52,6 +61,40 @@ export const validateLogoUrl = (value: string) => {
     return '올바른 HTTPS 이미지 URL을 입력하세요.';
   }
 };
+
+export const validateBackgroundUrl = (value: string) => {
+  if (value.length > 2048) return '배경 이미지 URL은 2048자 이하만 사용할 수 있습니다.';
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') return '배경 이미지 URL은 HTTPS만 사용할 수 있습니다.';
+    if (url.username || url.password) return '사용자명·비밀번호가 포함된 URL은 사용할 수 없습니다.';
+    if (['localhost', '127.0.0.1', '::1'].includes(url.hostname)) return '로컬 주소는 사용할 수 없습니다.';
+    return null;
+  } catch {
+    return '올바른 HTTPS 이미지 URL을 입력하세요.';
+  }
+};
+
+export const validateBackgroundFile = (file: Pick<File, 'type' | 'size' | 'name'>) => {
+  if (!(BACKGROUND_MIME_TYPES as readonly string[]).includes(file.type)) return 'PNG, JPEG, WebP 파일만 업로드할 수 있습니다.';
+  if (file.size > MAX_BACKGROUND_BYTES) return '배경 이미지는 2MiB 이하만 업로드할 수 있습니다.';
+  if (!file.name.trim()) return '파일명을 확인하세요.';
+  return null;
+};
+
+export const normalizeThemeSettings = (theme?: Partial<EventRecord['themeSettings']>): EventRecord['themeSettings'] => ({
+  backgroundSourceType: theme?.backgroundSourceType || 'preset',
+  backgroundPresetId: theme?.backgroundPresetId || 'classic-ivory',
+  backgroundImageUrl: theme?.backgroundImageUrl,
+  backgroundImageAssetId: theme?.backgroundImageAssetId,
+  backgroundFit: theme?.backgroundFit || 'cover',
+  backgroundPosition: theme?.backgroundPosition || 'center',
+  backgroundOverlayOpacity: Math.min(80, Math.max(0, Number(theme?.backgroundOverlayOpacity ?? 0))),
+  backgroundFallbackColor: theme?.backgroundFallbackColor || theme?.backgroundColor || '#fffaf0',
+  backgroundColor: theme?.backgroundColor || '#fffaf0',
+  textColor: theme?.textColor || '#3d3028',
+  accentColor: theme?.accentColor || '#a26d52',
+});
 
 export const resolveLogo = (event: EventRecord, organizations: Organization[], logos: LogoAsset[]) => {
   if (!event.logoVisible || event.logoPosition === 'hidden') return undefined;

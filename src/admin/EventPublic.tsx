@@ -4,6 +4,7 @@ import GalleryWrap from '@/layout/Gallery/GalleryWrap.tsx';
 import { getBackground } from './backgrounds.ts';
 import { getFont } from './catalog.ts';
 import { toEvent } from './repository.ts';
+import { normalizeThemeSettings, validateBackgroundUrl } from './validation.ts';
 import { EventRecord } from './types.ts';
 import { getKakaoMapLinks, getNaverMapLinks, getYouTubeEmbedUrl, openExternalAppOrWeb } from '@/utils/externalLinks.ts';
 
@@ -18,7 +19,11 @@ const EventPublic = ({ slug }: { slug: string }) => {
 
 const Invitation = ({ event }: { event: EventRecord }) => {
   const logo = event.logoExternalUrl ? { dataUrl: event.logoExternalUrl } : undefined;
-  const background = getBackground(event.themeSettings.backgroundPresetId);
+  const theme = normalizeThemeSettings(event.themeSettings);
+  const background = getBackground(theme.backgroundPresetId);
+  const externalBackground = theme.backgroundSourceType === 'url' && theme.backgroundImageUrl && !validateBackgroundUrl(theme.backgroundImageUrl) ? theme.backgroundImageUrl : undefined;
+  const overlay = Math.min(80, Math.max(0, theme.backgroundOverlayOpacity || 0)) / 100;
+  const backgroundStyle = externalBackground ? { backgroundColor: theme.backgroundFallbackColor || background.backgroundColor, backgroundImage: `linear-gradient(rgba(0,0,0,${overlay}),rgba(0,0,0,${overlay})),url(${JSON.stringify(externalBackground)})`, backgroundSize: theme.backgroundFit || 'cover', backgroundPosition: theme.backgroundPosition || 'center', backgroundRepeat: 'no-repeat' } : { background: background.css, backgroundColor: theme.backgroundFallbackColor || background.backgroundColor };
   const titleFont = getFont(event.fontSettings.title);
   const bodyFont = getFont(event.fontSettings.body);
   const mapName = event.venue || event.title;
@@ -27,10 +32,10 @@ const Invitation = ({ event }: { event: EventRecord }) => {
   const kakao = getKakaoMapLinks(mapName, event.address, event.coordinates?.lat || 0, event.coordinates?.lon || 0, 'public');
   const car = getKakaoMapLinks(mapName, event.address, event.coordinates?.lat || 0, event.coordinates?.lon || 0, 'car');
   const video = event.sections.video ? getYouTubeEmbedUrl(event.videoUrl) : null;
-  return <PublicShell style={{ background: background.css, color: event.themeSettings.textColor || background.textColor, fontFamily: bodyFont.family }}>
+  return <PublicShell style={{ ...backgroundStyle, color: theme.textColor || background.textColor, fontFamily: bodyFont.family }}>
     {logo && event.logoVisible && event.logoPosition !== 'hidden' && event.logoPosition !== 'bottom' && <Logo position={event.logoPosition} size={event.logoSize}><img src={logo.dataUrl} alt="행사 로고" onError={(image) => { image.currentTarget.style.display = 'none'; }} /></Logo>}
     <small>모바일 초대장</small>
-    <h1 style={{ fontFamily: titleFont.family, color: event.themeSettings.accentColor }}>{event.title}</h1>
+    <h1 style={{ fontFamily: titleFont.family, color: theme.accentColor }}>{event.title}</h1>
     <p>{event.intro}</p>
     <Meta>{event.eventType} · {event.host}{event.eventDateTime && ` · ${event.eventDateTime}`}</Meta>
     {event.sections.video && (video ? <Video title={event.videoTitle || '행사 영상'} src={video} /> : <p>동영상 링크를 재생할 수 없습니다.</p>)}

@@ -1,0 +1,26 @@
+{
+  "kind": "admin",
+  "requestedViewport": {
+    "width": 360,
+    "height": 800
+  },
+  "viewport": {
+    "width": 360,
+    "height": 800
+  },
+  "document": {
+    "scrollWidth": 360,
+    "clientWidth": 360,
+    "scrollHeight": 800,
+    "clientHeight": 800
+  },
+  "horizontalOverflow": false,
+  "elements": {
+    "heading": true,
+    "gallery": true,
+    "buttons": 6,
+    "images": 0,
+    "iframe": 0,
+    "mapLinks": 0
+  }
+}

@@ -5,7 +5,7 @@ import worker from '../worker/index.ts';
 import { createPreviewToken, verifyPreviewToken } from '../worker/preview.ts';
 import { validatePayload } from '../worker/validation.ts';
 import { getBackground, BACKGROUND_PRESETS } from '../src/admin/backgrounds.ts';
-import { resolveLogo, validateLogo, validateLogoUrl } from '../src/admin/validation.ts';
+import { normalizeThemeSettings, resolveLogo, validateBackgroundFile, validateBackgroundUrl, validateLogo, validateLogoUrl } from '../src/admin/validation.ts';
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto as Crypto;
 
@@ -47,6 +47,17 @@ test('validation rejects unsafe payload and logo URLs', () => {
 test('background allowlist has twelve presets and safe fallback', () => {
   assert.equal(BACKGROUND_PRESETS.length, 12);
   assert.equal(getBackground('not-allowed').id, 'classic-ivory');
+});
+
+test('custom background URL and file validation are safe and backward compatible', () => {
+  assert.equal(normalizeThemeSettings({}).backgroundPresetId, 'classic-ivory');
+  assert.equal(validateBackgroundUrl('http://example.com/background.png'), '배경 이미지 URL은 HTTPS만 사용할 수 있습니다.');
+  assert.match(validateBackgroundUrl('https://user:pass@example.com/background.png') || '', /사용자명|HTTPS/);
+  assert.equal(validateBackgroundUrl('https://example.com/background.webp'), null);
+  assert.equal(validateBackgroundFile({ type: 'image/svg+xml', size: 10, name: 'x.svg' }), 'PNG, JPEG, WebP 파일만 업로드할 수 있습니다.');
+  assert.equal(validateBackgroundFile({ type: 'image/webp', size: 2 * 1024 * 1024 + 1, name: 'x.webp' }), '배경 이미지는 2MiB 이하만 업로드할 수 있습니다.');
+  assert.equal(validatePayload({ title: 'x', host: 'x', slug: 'ok', themeSettings: { backgroundSourceType: 'url', backgroundImageUrl: 'https://example.com/bg.png', backgroundFit: 'cover', backgroundPosition: 'center', backgroundOverlayOpacity: 80, backgroundFallbackColor: '#fffaf0' } }).backgroundImageUrl, undefined);
+  assert.equal(validatePayload({ title: 'x', host: 'x', slug: 'ok', themeSettings: { backgroundSourceType: 'url', backgroundImageUrl: 'data:image/png;base64,x' } }).backgroundImageUrl, 'invalid background image URL');
 });
 
 test('logo precedence supports custom, organization default, URL and none', () => {

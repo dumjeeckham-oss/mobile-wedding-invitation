@@ -48,11 +48,17 @@ export interface FontSettings {
 }
 
 export interface ThemeSettings {
+  backgroundSourceType?: 'preset' | 'url' | 'upload';
   backgroundPresetId: string;
+  backgroundImageUrl?: string;
+  backgroundImageAssetId?: string;
+  backgroundFit?: 'cover' | 'contain';
+  backgroundPosition?: 'top' | 'center' | 'bottom';
+  backgroundOverlayOpacity?: number;
+  backgroundFallbackColor?: string;
   backgroundColor: string;
   textColor: string;
   accentColor: string;
-  backgroundImageAssetId?: string;
 }
 
 export type FontId =
