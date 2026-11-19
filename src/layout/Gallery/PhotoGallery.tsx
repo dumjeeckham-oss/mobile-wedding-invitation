@@ -16,8 +16,9 @@ const PhotoGallery = ({ items = images }: { items?: GalleryImage[] }) => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 0fr)',
+          gridTemplateColumns: 'repeat(2, 100px)',
           gridGap: 2,
+          justifyContent: 'center',
         }}>
         {items.map((image, index) => {
           return (
