@@ -5,11 +5,7 @@ import { Heading2 } from '@/components/Text.tsx';
 const Guestbook = () => {
   return (
     <GuestBookWrapper>
-      <Heading2>
-        메시지 입력 기능을 미리 확인해 보세요.
-        <br />
-        공개 데모에서는 입력 내용이 저장되거나 전달되지 않습니다.
-      </Heading2>
+      <Heading2>방명록</Heading2>
       <CommentForm />
     </GuestBookWrapper>
   );
