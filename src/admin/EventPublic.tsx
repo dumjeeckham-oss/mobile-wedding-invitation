@@ -41,7 +41,7 @@ const Invitation = ({ event }: { event: EventRecord }) => {
     <small>모바일 초대장</small>
     <h1 style={{ fontFamily: titleFont.family, color: theme.accentColor }}>{event.title}</h1>
     <p>{event.intro}</p>
-    <Meta>{event.eventType} · {event.host}{event.eventDateTime && ` · ${event.eventDateTime}`}</Meta>
+    {event.eventDateTime && <Meta>{event.eventDateTime}</Meta>}
     {event.sections.video && (video ? <Video title={event.videoTitle || '행사 영상'} src={video} /> : <p>동영상 링크를 재생할 수 없습니다.</p>)}
     {event.sections.gallery && event.gallery.length > 0 && <><h2>Gallery</h2><GalleryWrap images={event.gallery} /></>}
     {event.sections.map && <><h2>오시는 길</h2><p>{event.venue}</p><p>{event.address}</p><p>{event.transportationInfo}</p><p>{event.parkingInfo}</p><MapButtons><MapRow><a href={naverCar.webUrl} onClick={(click) => { click.preventDefault(); openExternalAppOrWeb(naverCar.appUrl, naverCar.webUrl); }}><MapBrand brand="naver">N</MapBrand>네이버 차량</a><a href={naver.webUrl} onClick={(click) => { click.preventDefault(); openExternalAppOrWeb(naver.appUrl, naver.webUrl); }}><MapBrand brand="naver">N</MapBrand>네이버 대중교통</a></MapRow><MapRow><a href={car.webUrl} onClick={(click) => { click.preventDefault(); openExternalAppOrWeb(car.appUrl, car.webUrl); }}><MapBrand brand="kakao">kakao</MapBrand>카카오 차량</a><a href={kakao.webUrl} onClick={(click) => { click.preventDefault(); openExternalAppOrWeb(kakao.appUrl, kakao.webUrl); }}><MapBrand brand="kakao">kakao</MapBrand>카카오 대중교통</a></MapRow></MapButtons></>}
