@@ -27,6 +27,7 @@ const Invitation = ({ event }: { event: EventRecord }) => {
   const backgroundStyle = externalBackground ? { backgroundColor: theme.backgroundFallbackColor || background.backgroundColor, backgroundImage: `linear-gradient(rgba(0,0,0,${overlay}),rgba(0,0,0,${overlay})),url(${JSON.stringify(externalBackground)})`, backgroundSize: theme.backgroundFit || 'cover', backgroundPosition: theme.backgroundPosition || 'center', backgroundRepeat: 'no-repeat' } : { background: background.css, backgroundColor: theme.backgroundFallbackColor || background.backgroundColor };
   const titleFont = getFont(event.fontSettings.title);
   const bodyFont = getFont(event.fontSettings.body);
+  const captionFont = getFont('noto-sans-kr');
   const logoCaption = event.host === '진보당 부천시지역위원회' ? '부천시지역위원회' : undefined;
   const mapName = event.venue || event.title;
   const naver = getNaverMapLinks(mapName, event.address, event.coordinates?.lat || 0, event.coordinates?.lon || 0, 'public');
@@ -36,7 +37,7 @@ const Invitation = ({ event }: { event: EventRecord }) => {
   const video = event.sections.video ? getYouTubeEmbedUrl(event.videoUrl) : null;
   return <PublicShell style={{ ...backgroundStyle, color: theme.textColor || background.textColor, fontFamily: bodyFont.family }}>
     {logo && event.logoVisible && event.logoPosition !== 'hidden' && event.logoPosition !== 'bottom' && <Logo position={event.logoPosition} size={event.logoSize}><img src={logo.dataUrl} alt="행사 로고" onError={(image) => { image.currentTarget.style.display = 'none'; }} /></Logo>}
-    {logoCaption && logo && event.logoVisible && event.logoPosition !== 'hidden' && event.logoPosition !== 'bottom' && <LogoCaption style={{ fontFamily: titleFont.family }}>{logoCaption}</LogoCaption>}
+    {logoCaption && logo && event.logoVisible && event.logoPosition !== 'hidden' && event.logoPosition !== 'bottom' && <LogoCaption style={{ fontFamily: captionFont.family }}>{logoCaption}</LogoCaption>}
     <small>모바일 초대장</small>
     <h1 style={{ fontFamily: titleFont.family, color: theme.accentColor }}>{event.title}</h1>
     <p>{event.intro}</p>
