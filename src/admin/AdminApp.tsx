@@ -86,7 +86,7 @@ const AdminApp = () => {
       <Header><div><Eyebrow>INVITE ADMIN · API</Eyebrow><h1>초대장 관리</h1></div><a href="/">공개 데모 보기</a></Header>
       <Body>
         <Nav>{(['dashboard', 'events', 'organizations', 'logos', 'design'] as Tab[]).map((item) => <NavButton key={item} active={tab === item} onClick={() => setTab(item)}>{({ dashboard: '대시보드', events: '행사 관리', organizations: '단체 관리', logos: '로고 관리', design: '디자인 설정' } as Record<Tab, string>)[item]}</NavButton>)}</Nav>
-        {notice && <Notice role="status">{notice}</Notice>}
+        {notice && <Notice role="status">{notice === 'Failed to fetch' ? <><strong>Cloudflare Access 로그인이 필요합니다.</strong> <a href="/api/admin/events" target="_blank" rel="noreferrer">Access 로그인</a> 후 이 화면을 새로고침하세요.</> : notice}</Notice>}
         {tab === 'dashboard' && <Dashboard events={visibleEvents} onCreate={startCreate} onSelect={selectEvent} />}
         {tab === 'events' && <EventEditor draft={draft} setDraft={setDraft} errors={errors} organizations={state.organizations} logos={state.logos} selected={Boolean(selectedId)} onSave={saveEvent} onClone={cloneEvent} onStatus={changeStatus} onCopyLink={copyLink} previewLogo={draftLogo} />}
         {tab === 'organizations' && <Organizations organizations={state.organizations} events={state.events} logos={state.logos} orgName={orgName} setOrgName={setOrgName} onCreate={createOrg} onUpdate={updateOrg} onMessage={setNotice} />}
@@ -110,7 +110,8 @@ const EventEditor = ({ draft, setDraft, errors, organizations, logos, selected, 
   const setLogoSource = (source: EventRecord['logoSourceType']) => update('logoSourceType', source);
   return <Section>
     <SectionHead><div><h2>{selected ? '행사 수정' : '새 행사'}</h2><p>저장 전에는 공개 초대장에 반영되지 않습니다.</p></div><PreviewCard event={draft} logo={previewLogo} backgroundImageUrl={backgroundUploadPreview} /></SectionHead>
-    <form onSubmit={onSave}>
+    <QuickActions><Primary type="submit" form="event-editor-form">저장</Primary></QuickActions>
+    <form id="event-editor-form" onSubmit={onSave}>
       <Grid>
         <Field label="행사명" error={errors.title}><input value={draft.title} onChange={(event) => update('title', event.target.value)} /></Field>
         <Field label="고유 URL (slug)" error={errors.slug}><input value={draft.slug} onChange={(event) => update('slug', slugify(event.target.value))} /></Field>
@@ -171,6 +172,7 @@ const Grid = styled.div`display:grid;grid-template-columns:repeat(2,minmax(0,1fr
 const FieldStyle = styled.label<{wide?:boolean}>`display:flex;flex-direction:column;gap:6px;grid-column:${p=>p.wide?'1/-1':'auto'};span{font-size:.85rem;font-weight:700;}input,textarea,select{font:inherit;border:1px solid #d9cece;border-radius:8px;padding:10px;background:#fff;box-sizing:border-box;width:100%;}textarea{min-height:80px;resize:vertical;}em{font-style:normal;color:#ba4b4b;font-size:.8rem;}`;
 const Panel = styled.div`border-top:1px solid #eee3e3;margin-top:22px;padding-top:4px;.checks{display:flex;flex-wrap:wrap;gap:10px;}`;
 const Actions = styled.div`display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;button{border:1px solid #d9cece;background:#fff;border-radius:8px;padding:10px 12px;cursor:pointer;}`;
+const QuickActions = styled.div`display:flex;justify-content:flex-end;margin:-4px 0 16px;position:sticky;top:8px;z-index:2;button{box-shadow:0 4px 12px rgba(82,52,63,.18);}`;
 const Preview = styled.div`width:240px;border:1px solid #eadfdf;border-radius:12px;overflow:hidden;flex:0 0 auto;div{min-height:150px;padding:12px;text-align:center;}img{display:block;margin:8px auto;max-height:45px;object-fit:contain;}h3{margin:12px 0 6px;}p{margin:0;}`;
 const BackgroundGrid = styled.div`display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;@media(max-width:680px){grid-template-columns:repeat(3,minmax(0,1fr));}button{border:1px solid #ddd0d0;background:white;border-radius:8px;padding:5px;cursor:pointer;text-align:left;}button[aria-pressed="true"]{outline:3px solid #7c4e60;}span{display:block;height:42px;border-radius:5px;}small{display:block;padding:5px 2px;font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}`;
 const ToggleStyle = styled.label`display:inline-flex;align-items:center;gap:6px;margin:8px 12px 8px 0;cursor:pointer;`;
