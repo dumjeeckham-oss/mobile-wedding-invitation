@@ -37,8 +37,8 @@ const Invitation = ({ event }: { event: EventRecord }) => {
   const video = event.sections.video ? getYouTubeEmbedUrl(event.videoUrl) : null;
   return <PublicShell style={{ ...backgroundStyle, color: theme.textColor || background.textColor, fontFamily: bodyFont.family }}>
     {logo && event.logoVisible && event.logoPosition !== 'hidden' && event.logoPosition !== 'bottom' && <Logo position={event.logoPosition} size={event.logoSize}><img src={logo.dataUrl} alt="행사 로고" onError={(image) => { image.currentTarget.style.display = 'none'; }} /></Logo>}
-    <small>모바일 초대장</small>
     {logoCaption && <InvitationSubtitle style={{ fontFamily: captionFont.family }}><span>{logoCaption}</span><span>{event.eventType}</span></InvitationSubtitle>}
+    <small>모바일 초대장</small>
     <h1 style={{ fontFamily: titleFont.family, color: theme.accentColor }}>{event.title}</h1>
     <p>{event.intro}</p>
     <Meta>{event.eventType} · {event.host}{event.eventDateTime && ` · ${event.eventDateTime}`}</Meta>
