@@ -95,6 +95,9 @@ test('worker separates public read and authenticated CRUD actions', async () => 
   assert.equal(cloneResponse.status, 201);
   const publishResponse = await worker.fetch(new Request('https://local/api/admin/events/event-1/unpublish', { method: 'POST', headers: { 'Cf-Access-Jwt-Assertion': signed.token } }), env);
   assert.equal(publishResponse.status, 200);
+  const deleteResponse = await worker.fetch(new Request('https://local/api/admin/events/event-1', { method: 'DELETE', headers: { 'Cf-Access-Jwt-Assertion': signed.token } }), env);
+  assert.equal(deleteResponse.status, 200);
+  assert.ok(db.runs.some((run) => run.sql.includes("UPDATE events SET publication_status=?1") && run.sql.includes('deleted_at')));
   assert.ok(db.runs.some((run) => run.sql.includes('INSERT INTO events')));
 });
 
